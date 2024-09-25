@@ -1,0 +1,4 @@
+C:\Users\Jackson\source\repos\ChessEngine\obj\Debug\net8.0\ChessEngine.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Jackson\source\repos\ChessEngine\obj\Debug\net8.0\ChessEngine.AssemblyInfoInputs.cache
+C:\Users\Jackson\source\repos\ChessEngine\obj\Debug\net8.0\ChessEngine.AssemblyInfo.cs
+C:\Users\Jackson\source\repos\ChessEngine\obj\Debug\net8.0\ChessEngine.csproj.CoreCompileInputs.cache
