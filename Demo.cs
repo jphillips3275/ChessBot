@@ -258,27 +258,22 @@ namespace Engine
                     validMoves = getMoves(board, whiteSpaces, blackSpaces, false);
 
                     Log.Warn("Calculating best move...");
-                    int bestMove = negaMax(3, board, whiteSpaces, blackSpaces, false, true);
-                    //int bestMoveAB = alphaBeta(3, board, whiteSpaces, blackSpaces, false, true, -int.MaxValue, int.MaxValue);
+                    //int bestMove = negaMax(3, board, whiteSpaces, blackSpaces, false, true);
+                    int bestMoveAB = alphaBeta(3, board, validMoves, whiteSpaces, blackSpaces, false, true, -int.MaxValue, int.MaxValue);
 
-                    int from = validMoves[bestMove];
-                    int to = validMoves[bestMove + 1];
-                    //int fromAB = validMoves[bestMoveAB];
-                    //int toAB = validMoves[bestMoveAB + 1];
+                    //int from = validMoves[bestMove];
+                    //int to = validMoves[bestMove + 1];
+                    int fromAB = validMoves[bestMoveAB];
+                    int toAB = validMoves[bestMoveAB + 1];
 
-                    Log.Warn($"Minimax selected Index:{from}, Target Index:{to}");
-                    //Log.Warn($"Alpha Beta selected Index:{fromAB}, Target Index:{toAB}");
+                    //Log.Warn($"Minimax selected Index:{from}, Target Index:{to}");
+                    Log.Warn($"Alpha Beta selected Index:{fromAB}, Target Index:{toAB}");
 
-                    for (int i = 0; i < board.Count; i++)
-                    {
-                        board[i].ChangePiece(board[i].Piece);
-                    }
-
-                    board[to].ChangePiece(board[from].Piece);
-                    whiteSpaces.Remove(to);
-                    board[from].ChangePiece();
-                    blackSpaces.Remove(from);
-                    blackSpaces.Add(to);
+                    board[toAB].ChangePiece(board[fromAB].Piece);
+                    whiteSpaces.Remove(toAB);
+                    board[fromAB].ChangePiece();
+                    blackSpaces.Remove(fromAB);
+                    blackSpaces.Add(toAB);
 
                     watch.Stop();
                     TimeSpan t = watch.Elapsed;
@@ -667,7 +662,7 @@ namespace Engine
                 //if (depth == 1) { Log.Info($"testing i {i} out of {moves.Count} in depth {depth}. Current move is {moves[i]} to {moves[i + 1]} which scored {score}"); }
                 //if (depth == 2) { Log.Warn($"testing i {i} out of {moves.Count} in depth {depth}. Current move is {moves[i]} to {moves[i + 1]} which scored {score}"); }
                 //if (depth == 3) { Log.Error($"testing i {i} out of {moves.Count} in depth {depth}. Current move is {moves[i]} to {moves[i + 1]} which scored {score}"); }
-                if (score > bestScore) { bestScore = score; bestIndex = i; if (root == true) { Log.Error($"new score {bestScore}"); } }
+                if (score > bestScore) { bestScore = score; bestIndex = i; }
 
                 //unmake move
                 if (turn)
@@ -692,13 +687,17 @@ namespace Engine
             else { return bestScore; }
         }
 
-        public int alphaBeta(int depth, List<Square> Board, List<int> whites, List<int> blacks, bool turn, bool root, int alpha, int beta)
+        public int alphaBeta(int depth, List<Square> Board, List<int> moves, List<int> whites, List<int> blacks, bool turn, bool root, int alpha, int beta)
         {
             if (depth == 0) { return evaluate(Board, false); }
             int bestScore = int.MinValue;
             int bestIndex = 0;
             string toPieceCopy;
-            List<int> moves = getMoves(Board, whites, blacks, turn);
+
+            if (!root)
+            {
+                moves = getMoves(Board, whites, blacks, turn);
+            }
             
             for (int i = 0; i < moves.Count; i += 2)
             {
@@ -723,8 +722,7 @@ namespace Engine
                 }
 
                 //evaluate move
-                int score = -alphaBeta(depth - 1, Board, whites, blacks, !turn, false, -beta, -alpha);
-                //if (score > bestScore) { bestScore = score; bestIndex = i; }
+                int score = -alphaBeta(depth - 1, Board, moves, whites, blacks, !turn, false, -beta, -alpha);
 
                 //unmake move
                 if (turn)
@@ -744,12 +742,17 @@ namespace Engine
                     if (toPieceCopy != "Empty") { whites.Add(moves[i + 1]); }
                 }
 
-                if (score >= beta) { return beta; }
-                if (score > alpha) { alpha = score; bestIndex = i; }
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestIndex = i;
+                    if (score > alpha) { alpha = score; }
+                }
+                if (score >= beta) { return bestScore; }
             }
 
             if (root == true) { return bestIndex; }
-            return alpha;
+            return bestScore;
         }
 
         public int evaluate(List<Square> Board, bool WTurn)
