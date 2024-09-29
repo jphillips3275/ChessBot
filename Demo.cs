@@ -761,14 +761,15 @@ namespace Engine
             int BScore = 0;
             int i = 0;
             int pieceCount = 0;
-            int wKingSquare = 0;
-            int bKingSquare = 0;
+            int wKingSquare = -1;
+            int bKingSquare = -1;
             for (int j = 0; j < Board.Count; j++)
             {
                 if (board[j].Piece != "Empty") { pieceCount++; }
                 if (board[j].Piece == "W_King") { wKingSquare = j; }
                 if (board[j].Piece == "B_King") { bKingSquare = j; }
             }
+            if (bKingSquare == -1 && !WTurn) { return int.MaxValue; }
             
             foreach (Square square in Board)
             {
