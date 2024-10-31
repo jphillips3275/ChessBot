@@ -67,7 +67,7 @@ namespace Engine
                               3, 2, 2, 2, 2, 2, 5, 3,
                               2, 2, 2, 2, 2, 2, 5, 3,
                               2, 1, 1, 1, 1, 1, 4, 3};
-        int[] queenHeatmap = { 0, 1, 1, 2, 2, 1, 1, 0,
+        int[] queenHeatmap = { 0, 1, 1, 5, 2, 1, 1, 0,
                                1, 2, 2, 2, 2, 2, 2, 1,
                                1, 2, 3, 3, 3, 3, 2, 1,
                                2, 3, 3, 3, 3, 3, 2, 2,
@@ -196,6 +196,8 @@ namespace Engine
                 if (click)
                 {
                     Log.Info($"Selected Piece:{board[(boardMouse.X * 8) + boardMouse.Y].Piece}, Index:{(boardMouse.X * 8) + boardMouse.Y}, Coordinates:{boardMouse.X}, {boardMouse.Y}");
+                    if (blackSpaces.Contains((boardMouse.X * 8) + boardMouse.Y)) { Log.Info("Black spaces contains this piece"); }
+                    if (whiteSpaces.Contains((boardMouse.X * 8) + boardMouse.Y)) { Log.Info("White spaces contains this piece"); }
                     if (selectedPiece != null && board[(boardMouse.X * 8) + boardMouse.Y].BoardPosition != selectedSquare && board[(boardMouse.X * 8) + boardMouse.Y].highlight != null)   //if you click on a new square
                     {
                         board[(boardMouse.X * 8) + boardMouse.Y].ChangePiece(selectedPiece);
@@ -209,6 +211,38 @@ namespace Engine
                             if (space.highlight != null) { space.HighlightOff(); }
                         }
                         if (selectedPiece == "W_Pawn" && selectedSquare.y == 6) { firstMoves_W[(((int)selectedSquare.x * 8) + (int)selectedSquare.y) / 8] = false; }
+                        Log.Warn($"{selectedPiece}, {selectedSquare.y}");
+                        if (selectedPiece == "W_Pawn" && boardMouse.Y == 0)
+                        {
+                            switch ((boardMouse.X * 8) + boardMouse.Y)
+                            {
+                                case 0:
+                                    board[0].ChangePiece("W_Queen");
+                                    break;
+                                case 8:
+                                    board[8].ChangePiece("W_Queen");
+                                    break;
+                                case 16:
+                                    board[16].ChangePiece("W_Queen");
+                                    break;
+                                case 24:
+                                    board[24].ChangePiece("W_Queen");
+                                    break;
+                                case 32:
+                                    board[32].ChangePiece("W_Queen");
+                                    break;
+                                case 40:
+                                    board[40].ChangePiece("W_Queen");
+                                    break;
+                                case 48:
+                                    board[48].ChangePiece("W_Queen");
+                                    break;
+                                case 56:
+                                    board[56].ChangePiece("W_Queen");
+                                    break;
+
+                            }
+                        }
                         if (selectedPiece == "W_King" && castleRights_W[0] && ((boardMouse.X * 8) + boardMouse.Y == 23)) { board[31].ChangePiece("W_Rook"); board[7].ChangePiece(); whiteSpaces.Add(31); }
                         if (selectedPiece == "W_King" && castleRights_W[1] && ((boardMouse.X * 8) + boardMouse.Y == 55)) { board[47].ChangePiece("W_Rook"); board[63].ChangePiece(); whiteSpaces.Add(47); }
                         if (selectedPiece == "W_King") { castleRights_W[0] = false; castleRights_W[1] = false; }
@@ -269,7 +303,21 @@ namespace Engine
                     //Log.Warn($"Minimax selected Index:{from}, Target Index:{to}");
                     Log.Warn($"Alpha Beta selected Index:{fromAB}, Target Index:{toAB}");
 
-                    board[toAB].ChangePiece(board[fromAB].Piece);
+                    int specialCode = checkSpecial(board, fromAB, toAB, board[fromAB].Piece);
+                    Log.Error($"Special code is {specialCode}");
+                    switch (specialCode)
+                    {
+                        case 9:
+                            blackSpaces.Add(24);
+                            blackSpaces.Remove(0);
+                            break;
+                        case 10:
+                            blackSpaces.Add(40);
+                            blackSpaces.Remove(56);
+                            break;
+                    }
+
+                    if (specialCode == 0 || specialCode == 9 || specialCode == 10) { board[toAB].ChangePiece(board[fromAB].Piece); }
                     whiteSpaces.Remove(toAB);
                     board[fromAB].ChangePiece();
                     blackSpaces.Remove(fromAB);
@@ -479,8 +527,8 @@ namespace Engine
                         if ((space + 7) < 64 && !blackPieces.Contains(Board[space + 7].Piece) && (Board[space + 7].BoardPosition.x - Board[space].BoardPosition.x) == 1) { moves.Add(space); moves.Add(space + 7); }
                         if ((space + 9) < 64 && !blackPieces.Contains(Board[space + 9].Piece) && (Board[space + 9].BoardPosition.x - Board[space].BoardPosition.x) == 1) { moves.Add(space); moves.Add(space + 9); }
 
-                        //if (castleRights_B[0] && Board[0].Piece == "B_Rook" && Board[8].Piece == "Empty" && Board[16].Piece == "Empty" && Board[24].Piece == "Empty") { moves.Add(space); moves.Add(0); }
-                        //if (castleRights_B[1] && Board[40].Piece == "Empty" && Board[48].Piece == "Empty" && Board[56].Piece == "B_Rook") { moves.Add(space); moves.Add(56); }
+                        if (castleRights_B[0] && Board[0].Piece == "B_Rook" && Board[8].Piece == "Empty" && Board[16].Piece == "Empty" && Board[24].Piece == "Empty") { moves.Add(space); moves.Add(16); }
+                        if (castleRights_B[1] && Board[40].Piece == "Empty" && Board[48].Piece == "Empty" && Board[56].Piece == "B_Rook") { moves.Add(space); moves.Add(48); }
                     }
                     if (selectedPiece == "B_Rook")
                     {
@@ -693,6 +741,7 @@ namespace Engine
             int bestScore = int.MinValue;
             int bestIndex = 0;
             string toPieceCopy;
+            int specialCode = 0;
 
             if (!root)
             {
@@ -719,6 +768,19 @@ namespace Engine
                     whites.Remove(moves[i + 1]);
                     blacks.Remove(moves[i]);
                     blacks.Add(moves[i + 1]);
+                    //check for special moves
+                    specialCode = checkSpecial(Board, moves[i], moves[i + 1], Board[moves[i]].Piece);
+                    switch (specialCode)
+                    {
+                        case 9:
+                            blacks.Add(16);
+                            blacks.Add(24);
+                            break;
+                        case 10:
+                            blacks.Add(40);
+                            blacks.Add(48);
+                            break;
+                    }
                 }
 
                 //evaluate move
@@ -740,6 +802,24 @@ namespace Engine
                     blacks.Remove(moves[i + 1]);
                     blacks.Add(moves[i]);
                     if (toPieceCopy != "Empty") { whites.Add(moves[i + 1]); }
+                    //if (specialCode == 9) { board[24].ChangePiece(); board[0].ChangePiece("B_Rook"); blacks.Remove(24); blacks.Add(0); }
+                    switch (specialCode)
+                    {
+                        case 9:
+                            board[24].ChangePiece();
+                            board[0].ChangePiece("B_Rook");
+                            blacks.Remove(24);
+                            blacks.Remove(16);
+                            blacks.Add(0);
+                            break;
+                        case 10:
+                            board[48].ChangePiece();
+                            board[56].ChangePiece("B_Rook");
+                            blacks.Remove(48);
+                            blacks.Remove(40);
+                            blacks.Add(56);
+                            break;
+                    }
                 }
 
                 if (score > bestScore)
@@ -753,6 +833,126 @@ namespace Engine
 
             if (root == true) { return bestIndex; }
             return bestScore;
+        }
+
+        public int checkSpecial(List<Square> board, int from, int to, string piece)
+        {
+            // 0 = no special, 1-8 = pawn promoted to queen, 9 = left side castle, 10 = right side castle
+            // right side castle puts a rook on 40, left side castle puts a rook on 24
+            int specialCode = 0;
+
+            switch (from)
+            {
+                case 32:
+                    //king cases
+                    if (to == 16 && piece == "B_King") { specialCode = 9; board[24].ChangePiece("B_Rook"); board[0].ChangePiece(); break; }
+                    if (to == 48 && piece == "B_King") { specialCode = 10; board[40].ChangePiece("B_Rook"); board[56].ChangePiece(); break; }
+                    break;
+                case 6:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 7 || to == 15)
+                        {
+                            specialCode = 1;
+                            if (to == 7) { board[7].ChangePiece("B_Queen"); }
+                            if (to == 15) { board[15].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 14:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 15 || to == 7 || to == 23)
+                        {
+                            specialCode = 2;
+                            if (to == 7) { board[7].ChangePiece("B_Queen"); }
+                            if (to == 15) { board[15].ChangePiece("B_Queen"); }
+                            if (to == 23) { board[23].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 22:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 23 || to == 15 || to == 31)
+                        {
+                            specialCode = 3;
+                            if (to == 15) { board[15].ChangePiece("B_Queen"); }
+                            if (to == 23) { board[23].ChangePiece("B_Queen"); }
+                            if (to == 31) { board[31].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 30:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 31 || to == 23 || to == 39)
+                        {
+                            specialCode = 4;
+                            if (to == 23) { board[23].ChangePiece("B_Queen"); }
+                            if (to == 31) { board[31].ChangePiece("B_Queen"); }
+                            if (to == 39) { board[39].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 38:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 39 || to == 31 || to == 47)
+                        {
+                            specialCode = 5;
+                            if (to == 31) { board[31].ChangePiece("B_Queen"); }
+                            if (to == 39) { board[39].ChangePiece("B_Queen"); }
+                            if (to == 47) { board[47].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 46:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 47 || to == 39 || to == 55)
+                        {
+                            specialCode = 6;
+                            if (to == 39) { board[39].ChangePiece("B_Queen"); }
+                            if (to == 47) { board[47].ChangePiece("B_Queen"); }
+                            if (to == 55) { board[55].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 54:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 55 || to == 47 || to == 63)
+                        {
+                            specialCode = 7;
+                            if (to == 47) { board[47].ChangePiece("B_Queen"); }
+                            if (to == 55) { board[55].ChangePiece("B_Queen"); }
+                            if (to == 63) { board[63].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+                case 62:
+                    if (piece == "B_Pawn")
+                    {
+                        if (to == 63 || to == 55)
+                        {
+                            specialCode = 8;
+                            if (to == 55) { board[55].ChangePiece("B_Queen"); }
+                            if (to == 63) { board[63].ChangePiece("B_Queen"); }
+                            break;
+                        }
+                    }
+                    break;
+            }
+
+            return specialCode;
         }
 
         public int evaluate(List<Square> Board, bool WTurn)
@@ -788,6 +988,8 @@ namespace Engine
                 if (square.Piece == "B_King") { if (pieceCount > 8) { BScore += 9999; BScore += kingHeatmap[i]; } continue; }
                 i++;
             }
+            if (board[16].Piece == "B_King") { BScore += 1000000000; }
+            //if (board[35].Piece == "B_Pawn") { BScore += 100000; }
             if (pieceCount <= 5) { BScore += endGameHeatmap[wKingSquare]; WScore += endGameHeatmap[bKingSquare]; }
             if (WTurn == false) { return WScore - BScore; }
             else { return BScore - WScore; }
